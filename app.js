@@ -33,7 +33,15 @@ app.post('/register', async(req, res) => {
         const oldUser = await User.findOne({email});
         const isContaner = await Container.findOne({containerCode});
 
-        console.log(oldUser, isContaner, !(isContaner))
+        // console.log("olduser  ===>",oldUser)
+        // console.log("isContaner ===>", isContaner)
+        // console.log(isContaner.container_id)
+        // if(!(isContaner.container_id)){
+        //     console.log("! is not ===>",isContaner.container_id)
+        // }else{
+        //     console.log("is ===>",isContaner.container_id)
+        // }
+        
 
         if(oldUser){
             const errorReply  = {
@@ -42,7 +50,7 @@ app.post('/register', async(req, res) => {
             }
             res.status(409).send(errorReply);
         }
-        else if(!isContaner){
+        else if(!(isContaner.container_id)){
             const errorReply = {
                 registerStatus: false,
                 text: "Invalid contaner code."
@@ -51,7 +59,7 @@ app.post('/register', async(req, res) => {
         }
         else{
             const hashPassword = bcrypt.hashSync(password, enryptRound);
-
+            console.log(hashPassword)
             await User.create({
                 first_name: firstName,
                 last_name: lastName,
@@ -70,8 +78,9 @@ app.post('/register', async(req, res) => {
     }catch(err){
         const errorReply = {
             registerStatus: false,
-            text: "Invalid contaner code."
+            text: "This container code alreadly use."
         }
+        console.log(err)
         res.status(409).send(errorReply)
     }
 })
@@ -140,6 +149,32 @@ app.put('/updateprofile', auth, async(req, res) => {
     })
 })
 
+app.post('/checkoauth', async(req, res) => {
+    const {token} = req.body;
+    const config = process.env;
+    if(!token){
+        const replyText = {
+            statusLogin: false, 
+            text: "please login to access this pages"
+        }
+        res.send(replyText)
+    } 
+    try{
+        const decoded = jwt.verify(token, config.TOKEN_KEY)
+        const replyText = {
+            statusLogin: true,
+            data: decoded
+        }
+        res.send(replyText)
+    }catch(err){
+        const replyText ={
+            statusLogin: false, 
+            text: "please login to access this pages",
+            error: err
+        }
+        res.send(replyText)
+    }
 
+})
 
 module.exports = app;
